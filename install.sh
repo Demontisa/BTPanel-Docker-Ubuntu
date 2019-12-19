@@ -32,9 +32,6 @@ Lock_Clear(){
 		rm -f /etc/bt_crack.pl
 	fi
 }
-Install_Check(){
-	
-}
 System_Check(){
 	for serviceS in nginx httpd mysqld
 	do
@@ -46,7 +43,7 @@ System_Check(){
 			else
 				serviceCheck=$(cat /etc/init.d/${serviceS}|grep /www/server/${serviceS})
 			fi
-			[ -z "${serviceCheck}" ] && Install_Check
+			#[ -z "${serviceCheck}" ] && Install_Check
 		fi
 	done
 }
