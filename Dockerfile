@@ -8,4 +8,4 @@ ADD install.sh install.sh
 #运行脚本
 RUN sudo bash install.sh
 
-CMD /etc/init.d/bt start && /etc/init.d/bt default
+CMD /etc/init.d/bt start && bash --login
