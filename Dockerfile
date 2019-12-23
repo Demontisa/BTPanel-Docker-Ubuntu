@@ -6,9 +6,9 @@ RUN apt-get update -y && apt-get install sudo wget -y
 
 ADD install.sh install.sh
 ADD bt baota
-ADD tools.py tools.py
+ADD /www/server/panel/tools.py /root/tools.py
+ADD first.py /www/server/panel/tools.py
 #运行脚本
 RUN sudo bash install.sh
 
-CMD baota && bash --login
-CMD /etc/init.d/bt start && bash --login
+CMD sudo bash baota && /etc/init.d/bt start && bash --login
