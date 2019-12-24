@@ -161,7 +161,7 @@ def bt_cli(u_input = 0):
         else:
             input_user = input("请输入新的面板用户名(>5位)：")
         set_panel_username(input_user.strip())
-    
+
 if __name__ == "__main__":
     type = sys.argv[1];
     if type == 'root':
