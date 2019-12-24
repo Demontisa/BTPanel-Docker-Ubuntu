@@ -409,17 +409,8 @@ def bt_cli(u_input = 0):
     raw_tip = "==============================================="
     if not u_input:
         print("===========检测到容器第一次运行，请按照编号修改用户名和密码==============")
-        print("(1) 重启面板服务           (8) 改面板端口")
-        print("(2) 停止面板服务           (9) 清除面板缓存")
-        print("(3) 启动面板服务           (10) 清除登录限制")
-        print("(4) 重载面板服务           (11) 取消入口限制")
-        print("(5) 修改面板密码           (12) 取消域名绑定限制")
-        print("(6) 修改面板用户名         (13) 取消IP访问限制")
-        print("(7) 强制修改MySQL密码      (14) 查看面板默认信息")
-        print("(22) 显示面板错误日志      (15) 清理系统垃圾")
-        print("(23) 关闭BasicAuth认证     (16) 修复面板(检查错误并更新面板文件到最新版)")
-        print("(24) 关闭谷歌认证          (17) 设置日志切割是否压缩")
-        print("(25) 设置是否自动备份面板  (18) 设置是否保存文件历史副本")
+        print("(1) 修改面板密码")
+        print("(2) 修改面板用户名")
         print("(0) 取消")
         print(raw_tip)
         try:
@@ -437,147 +428,21 @@ def bt_cli(u_input = 0):
     print("正在执行(%s)..." % u_input)
     print(raw_tip)
 
+    
+    
     if u_input == 1:
-        os.system("/etc/init.d/bt restart")
-    elif u_input == 2:
-        os.system("/etc/init.d/bt stop")
-    elif u_input == 3:
-        os.system("/etc/init.d/bt start")
-    elif u_input == 4:
-        os.system("/etc/init.d/bt reload")
-    elif u_input == 5:
         if sys.version_info[0] == 2:
             input_pwd = raw_input("请输入新的面板密码：")
         else:
             input_pwd = input("请输入新的面板密码：")
-        set_panel_pwd(input_pwd.strip(),True)
-    elif u_input == 6:
+            set_panel_pwd(input_pwd.strip(),True)
+    elif u_input == 2:
         if sys.version_info[0] == 2:
             input_user = raw_input("请输入新的面板用户名(>5位)：")
         else:
             input_user = input("请输入新的面板用户名(>5位)：")
-        set_panel_username(input_user.strip())
-    elif u_input == 7:
-        if sys.version_info[0] == 2:
-            input_mysql = raw_input("请输入新的MySQL密码：")
-        else:
-            input_mysql = input("请输入新的MySQL密码：")
-        if not input_mysql:
-            print("|-错误，不能设置空密码")
-            return;
-
-        if len(input_mysql) < 8:
-            print("|-错误，长度不能少于8位")
-            return;
-
-        import re
-        rep = "^[\w@\._]+$"
-        if not re.match(rep, input_mysql):
-            print("|-错误，密码中不能包含特殊符号")
-            return;
-        
-        print(input_mysql)
-        set_mysql_root(input_mysql.strip())
-    elif u_input == 8:
-        input_port = input("请输入新的面板端口：")
-        if sys.version_info[0] == 3: input_port = int(input_port)
-        if not input_port:
-            print("|-错误，未输入任何有效端口")
-            return;
-        if input_port in [80,443,21,20,22]:
-            print("|-错误，请不要使用常用端口作为面板端口")
-            return;
-        old_port = int(public.readFile('data/port.pl'))
-        if old_port == input_port:
-            print("|-错误，与面板当前端口一致，无需修改")
-            return;
-
-        is_exists = public.ExecShell("lsof -i:%s|grep LISTEN|grep -v grep" % input_port)
-        if len(is_exists[0]) > 5:
-            print("|-错误，指定端口已被其它应用占用")
-            return;
-
-        public.writeFile('data/port.pl',str(input_port))
-        if os.path.exists("/usr/bin/firewall-cmd"):
-            os.system("firewall-cmd --permanent --zone=public --add-port=%s/tcp" % input_port)
-            os.system("firewall-cmd --reload")
-        elif os.path.exists("/etc/sysconfig/iptables"):
-            os.system("iptables -I INPUT -p tcp -m state --state NEW -m tcp --dport %s -j ACCEPT" % input_port)
-            os.system("service iptables save")
-        else:
-            os.system("ufw allow %s" % input_port)
-            os.system("ufw reload")
-        os.system("/etc/init.d/bt reload")
-        print("|-已将面板端口修改为：%s" % input_port)
-        print("|-若您的服务器提供商是[阿里云][腾讯云][华为云]或其它开启了[安全组]的服务器,请在安全组放行[%s]端口才能访问面板" % input_port)
-    elif u_input == 9:
-        sess_file = '/dev/shm/session.db'
-        if os.path.exists(sess_file): os.remove(sess_file)
-        os.system("/etc/init.d/bt reload")
-    elif u_input == 10:
-        os.system("/etc/init.d/bt reload")
-    elif u_input == 11:
-        auth_file = 'data/admin_path.pl'
-        if os.path.exists(auth_file): os.remove(auth_file)
-        os.system("/etc/init.d/bt reload")
-        print("|-已取消入口限制")
-    elif u_input == 12:
-        auth_file = 'data/domain.conf'
-        if os.path.exists(auth_file): os.remove(auth_file)
-        os.system("/etc/init.d/bt reload")
-        print("|-已取消域名访问限制")
-    elif u_input == 13:
-        auth_file = 'data/limitip.conf'
-        if os.path.exists(auth_file): os.remove(auth_file)
-        os.system("/etc/init.d/bt reload")
-        print("|-已取消IP访问限制")
-    elif u_input == 14:
-        os.system("/etc/init.d/bt default")
-    elif u_input == 15:
-        ClearSystem()
-    elif u_input == 16:
-        os.system("curl http://download.bt.cn/install/update6.sh|bash")
-    elif u_input == 17:
-        l_path = '/www/server/panel/data/log_not_gzip.pl'
-        if os.path.exists(l_path):
-            print("|-检测到已关闭gzip压缩功能,正在开启...")
-            os.remove(l_path)
-            print("|-已开启gzip压缩")
-        else:
-            print("|-检测到已开启gzip压缩功能,正在关闭...")
-            public.writeFile(l_path,'True')
-            print("|-已关闭gzip压缩")
-    elif u_input == 18:
-        l_path = '/www/server/panel/data/not_auto_backup.pl'
-        if os.path.exists(l_path):
-            print("|-检测到已关闭面板自动备份功能,正在开启...")
-            os.remove(l_path)
-            print("|-已开启面板自动备份功能")
-        else:
-            print("|-检测到已开启面板自动备份功能,正在关闭...")
-            public.writeFile(l_path,'True')
-            print("|-已开关闭面板自动备份功能")
-    elif u_input == 22:
-        os.system('tail -100 /www/server/panel/logs/error.log')
-    elif u_input == 23:
-        filename = '/www/server/panel/config/basic_auth.json'
-        if os.path.exists(filename): os.remove(filename)
-        os.system('bt reload')
-        print("|-已关闭BasicAuth认证")
-    elif u_input == 24:
-        filename = '/www/server/panel/data/two_step_auth.txt'
-        if os.path.exists(filename): os.remove(filename)
-        print("|-已关闭谷歌认证")
-    elif u_input == 25:
-        l_path = '/www/server/panel/data/not_file_history.pl'
-        if os.path.exists(l_path):
-            print("|-检测到已关闭文件副本功能,正在开启...")
-            os.remove(l_path)
-            print("|-已开启文件副本功能")
-        else:
-            print("|-检测到已开启文件副本功能,正在关闭...")
-            public.writeFile(l_path,'True')
-            print("|-已开关闭文件副本功能")
+            set_panel_username(input_user.strip())
+    
 
 
 
