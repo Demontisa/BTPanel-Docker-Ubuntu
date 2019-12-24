@@ -149,8 +149,6 @@ def bt_cli(u_input = 0):
     print("正在执行(%s)..." % u_input)
     print(raw_tip)
 
-    
-    
     if u_input == 1:
         if sys.version_info[0] == 2:
             input_pwd = raw_input("请输入新的面板密码：")
@@ -164,9 +162,6 @@ def bt_cli(u_input = 0):
             input_user = input("请输入新的面板用户名(>5位)：")
         set_panel_username(input_user.strip())
     
-
-
-
 if __name__ == "__main__":
     type = sys.argv[1];
     if type == 'root':
