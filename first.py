@@ -11,53 +11,11 @@
 # 工具箱
 #------------------------------
 import sys,os
-panelPath = '/www/server/panel/';
+panelPath = '/www/server/panel/'
 os.chdir(panelPath)
 sys.path.insert(0,panelPath + "class/")
 import public,time,json
 if sys.version_info[0] == 3: raw_input = input
-
-#设置MySQL密码
-def set_mysql_root(password):
-    import db,os
-    sql = db.Sql()
-    
-    root_mysql = '''#!/bin/bash
-PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
-export PATH
-pwd=$1
-/etc/init.d/mysqld stop
-mysqld_safe --skip-grant-tables&
-echo '正在修改密码...';
-echo 'The set password...';
-sleep 6
-m_version=$(cat /www/server/mysql/version.pl|grep -E "(5.1.|5.5.|5.6.|10.0|10.1)")
-if [ "$m_version" != "" ];then
-    mysql -uroot -e "UPDATE mysql.user SET password=PASSWORD('${pwd}') WHERE user='root'";
-else
-    m_version=$(cat /www/server/mysql/version.pl|grep -E "(5.7.|8.0.|10.4.)")
-    if [ "$m_version" != "" ];then
-        mysql -uroot -e "FLUSH PRIVILEGES;update mysql.user set authentication_string='' where user='root';alter user 'root'@'localhost' identified by '${pwd}';alter user 'root'@'127.0.0.1' identified by '${pwd}';FLUSH PRIVILEGES;";
-    else
-        mysql -uroot -e "update mysql.user set authentication_string=password('${pwd}') where user='root';"
-    fi
-fi
-mysql -uroot -e "FLUSH PRIVILEGES";
-pkill -9 mysqld_safe
-pkill -9 mysqld
-sleep 2
-/etc/init.d/mysqld start
-
-echo '==========================================='
-echo "root密码成功修改为: ${pwd}"
-echo "The root password set ${pwd}  successuful"''';
-    
-    public.writeFile('mysql_root.sh',root_mysql)
-    os.system("/bin/bash mysql_root.sh " + password)
-    os.system("rm -f mysql_root.sh")
-    
-    result = sql.table('config').where('id=?',(1,)).setField('mysql_root',password)
-    print(result);
 
 #设置面板密码
 def set_panel_pwd(password,ncli = False):
@@ -69,108 +27,8 @@ def set_panel_pwd(password,ncli = False):
         print("|-用户名: " + username);
         print("|-新密码: " + password);
     else:
-        print("|-用户名: " + username);
-        print("|-新密码: " + password);
+        print(username)
 
-#设置数据库目录
-def set_mysql_dir(path):
-    mysql_dir = '''#!/bin/bash
-PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
-export PATH
-oldDir=`cat /etc/my.cnf |grep 'datadir'|awk '{print $3}'`
-newDir=$1
-mkdir $newDir
-if [ ! -d "${newDir}" ];then
-    echo 'The specified storage path does not exist!'
-    exit
-fi
-echo "Stopping MySQL service..."
-/etc/init.d/mysqld stop
-
-echo "Copying files, please wait..."
-\cp -r -a $oldDir/* $newDir
-chown -R mysql.mysql $newDir
-sed -i "s#$oldDir#$newDir#" /etc/my.cnf
-
-echo "Starting MySQL service..."
-/etc/init.d/mysqld start
-echo ''
-echo 'Successful'
-echo '---------------------------------------------------------------------'
-echo "Has changed the MySQL storage directory to: $newDir"
-echo '---------------------------------------------------------------------'
-''';
-
-    public.writeFile('mysql_dir.sh',mysql_dir)
-    os.system("/bin/bash mysql_dir.sh " + path)
-    os.system("rm -f mysql_dir.sh")
-
-
-#封装
-def PackagePanel():
-    print('========================================================')
-    print('|-正在清理日志信息...'),
-    public.M('logs').where('id!=?',(0,)).delete();
-    print('\t\t\033[1;32m[done]\033[0m')
-    print('|-正在清理任务历史...'),
-    public.M('tasks').where('id!=?',(0,)).delete();
-    print('\t\t\033[1;32m[done]\033[0m')
-    print('|-正在清理网络监控记录...'),
-    public.M('network').dbfile('system').where('id!=?',(0,)).delete();
-    print('\t\033[1;32m[done]\033[0m')
-    print('|-正在清理CPU监控记录...'),
-    public.M('cpuio').dbfile('system').where('id!=?',(0,)).delete();
-    print('\t\033[1;32m[done]\033[0m')
-    print('|-正在清理磁盘监控记录...'),
-    public.M('diskio').dbfile('system').where('id!=?',(0,)).delete();
-    print('\t\033[1;32m[done]\033[0m')
-    print('|-正在清理IP信息...'),
-    os.system('rm -f /www/server/panel/data/iplist.txt')
-    os.system('rm -f /www/server/panel/data/address.pl')
-    os.system('rm -f /www/server/panel/data/*.login')
-    os.system('rm -f /www/server/panel/data/domain.conf')
-    os.system('rm -f /www/server/panel/data/user*')
-    os.system('rm -f /www/server/panel/data/admin_path.pl')
-    os.system('rm -f /root/.ssh/*')
-
-    print('\t\033[1;32m[done]\033[0m')
-    print('|-正在清理系统使用痕迹...'),
-    command = '''cat /dev/null > /var/log/boot.log
-cat /dev/null > /var/log/btmp
-cat /dev/null > /var/log/cron
-cat /dev/null > /var/log/dmesg
-cat /dev/null > /var/log/firewalld
-cat /dev/null > /var/log/grubby
-cat /dev/null > /var/log/lastlog
-cat /dev/null > /var/log/mail.info
-cat /dev/null > /var/log/maillog
-cat /dev/null > /var/log/messages
-cat /dev/null > /var/log/secure
-cat /dev/null > /var/log/spooler
-cat /dev/null > /var/log/syslog
-cat /dev/null > /var/log/tallylog
-cat /dev/null > /var/log/wpa_supplicant.log
-cat /dev/null > /var/log/wtmp
-cat /dev/null > /var/log/yum.log
-history -c
-'''
-    os.system(command);
-    print('\t\033[1;32m[done]\033[0m')
-    public.writeFile('/www/server/panel/install.pl',"True");
-    port = public.readFile('data/port.pl').strip();
-    public.M('config').where("id=?",('1',)).setField('status',0);
-    print('========================================================')
-    print('\033[1;32m|-面板封装成功,请不要再登陆面板做任何其它操作!\033[0m')
-    print('\033[1;41m|-面板初始化地址: http://{SERVERIP}:'+port+'/install\033[0m')
-
-#清空正在执行的任务
-def CloseTask():
-    ncount = public.M('tasks').where('status!=?',(1,)).delete();
-    os.system("kill `ps -ef |grep 'python panelSafe.pyc'|grep -v grep|grep -v panelExec|awk '{print $2}'`");
-    os.system("kill `ps -ef |grep 'install_soft.sh'|grep -v grep|grep -v panelExec|awk '{print $2}'`");
-    os.system('/etc/init.d/bt restart');
-    print("成功清理 " + int(ncount) + " 个任务!")
-    
 #自签证书
 def CreateSSL():
     import OpenSSL
@@ -200,131 +58,6 @@ def CreateFiles(path,num):
     for i in range(num):
         filename = path + '/' + str(time.time()) + '__' + str(i)
         open(path,'w+').close()
-
-#计算文件数量
-def GetFilesCount(path):
-    i=0;
-    for name in os.listdir(path): i += 1;
-    return i;
-
-
-#清理系统垃圾
-def ClearSystem():
-    count = total = 0;
-    tmp_total,tmp_count = ClearMail();
-    count += tmp_count;
-    total += tmp_total;
-    print('=======================================================================')
-    tmp_total,tmp_count = ClearSession();
-    count += tmp_count;
-    total += tmp_total;
-    print('=======================================================================')
-    tmp_total,tmp_count = ClearOther();
-    count += tmp_count;
-    total += tmp_total;
-    print('=======================================================================')
-    print('\033[1;32m|-系统垃圾清理完成，共删除['+str(count)+']个文件,释放磁盘空间['+ToSize(total)+']\033[0m');
-
-#清理邮件日志
-def ClearMail():
-    rpath = '/var/spool';
-    total = count = 0;
-    import shutil
-    con = ['cron','anacron','mail'];
-    for d in os.listdir(rpath):
-        if d in con: continue;
-        dpath = rpath + '/' + d
-        print('|-正在清理' + dpath + ' ...');
-        time.sleep(0.2);
-        num = size = 0;
-        for n in os.listdir(dpath):
-            filename = dpath + '/' + n
-            fsize = os.path.getsize(filename);
-            print('|---['+ToSize(fsize)+'] del ' + filename),
-            size += fsize
-            if os.path.isdir(filename):
-                shutil.rmtree(filename)
-            else:
-                os.remove(filename)
-            print('\t\033[1;32m[OK]\033[0m')
-            num += 1
-        print('|-已清理['+dpath+'],删除['+str(num)+']个文件,共释放磁盘空间['+ToSize(size)+']');
-        total += size;
-        count += num;
-    print('=======================================================================')
-    print('|-已完成spool的清理，删除['+str(count)+']个文件,共释放磁盘空间['+ToSize(total)+']');
-    return total,count
-
-#清理php_session文件
-def ClearSession():
-    spath = '/tmp'
-    total = count = 0;
-    import shutil
-    print('|-正在清理PHP_SESSION ...');
-    for d in os.listdir(spath):
-        if d.find('sess_') == -1: continue;
-        filename = spath + '/' + d;
-        fsize = os.path.getsize(filename);
-        print('|---['+ToSize(fsize)+'] del ' + filename),
-        total += fsize
-        if os.path.isdir(filename):
-            shutil.rmtree(filename)
-        else:
-            os.remove(filename)
-        print('\t\033[1;32m[OK]\033[0m')
-        count += 1;
-    print('|-已完成php_session的清理，删除['+str(count)+']个文件,共释放磁盘空间['+ToSize(total)+']');
-    return total,count
-
-#清空回收站
-def ClearRecycle_Bin():
-    import files
-    f = files.files();
-    f.Close_Recycle_bin(None);
-    
-#清理其它
-def ClearOther():
-    clearPath = [
-                 {'path':'/www/server/panel','find':'testDisk_'},
-                 {'path':'/www/wwwlogs','find':'log'},
-                 {'path':'/tmp','find':'panelBoot.pl'},
-                 {'path':'/www/server/panel/install','find':'.rpm'},
-                 {'path':'/www/server/panel/install','find':'.zip'},
-                 {'path':'/www/server/panel/install','find':'.gz'}
-                 ]
-    
-    total = count = 0;
-    print('|-正在清理临时文件及网站日志 ...');
-    for c in clearPath:
-        for d in os.listdir(c['path']):
-            if d.find(c['find']) == -1: continue;
-            filename = c['path'] + '/' + d;
-            if os.path.isdir(filename): continue
-            fsize = os.path.getsize(filename);
-            print('|---['+ToSize(fsize)+'] del ' + filename),
-            total += fsize
-            os.remove(filename)
-            print('\t\033[1;32m[OK]\033[0m')
-            count += 1;
-    public.serviceReload();
-    os.system('sleep 1 && /etc/init.d/bt reload > /dev/null &');
-    print('|-已完成临时文件及网站日志的清理，删除['+str(count)+']个文件,共释放磁盘空间['+ToSize(total)+']');
-    return total,count
-
-#关闭普通日志
-def CloseLogs():
-    try:
-        paths = ['/usr/lib/python2.7/site-packages/web/httpserver.py','/usr/lib/python2.6/site-packages/web/httpserver.py']
-        for path in paths:
-            if not os.path.exists(path): continue;
-            hsc = public.readFile(path);
-            if hsc.find('500 Internal Server Error') != -1: continue;
-            rstr = '''def log(self, status, environ):
-        if status != '500 Internal Server Error': return;''';
-            hsc = hsc.replace("def log(self, status, environ):",rstr)
-            if hsc.find('500 Internal Server Error') == -1: return False;
-            public.writeFile(path,hsc)
-    except:pass;
 
 #字节单位转换
 def ToSize(size):
@@ -435,13 +168,13 @@ def bt_cli(u_input = 0):
             input_pwd = raw_input("请输入新的面板密码：")
         else:
             input_pwd = input("请输入新的面板密码：")
-            set_panel_pwd(input_pwd.strip(),True)
+        set_panel_pwd(input_pwd.strip(),True)
     elif u_input == 2:
         if sys.version_info[0] == 2:
             input_user = raw_input("请输入新的面板用户名(>5位)：")
         else:
             input_user = input("请输入新的面板用户名(>5位)：")
-            set_panel_username(input_user.strip())
+        set_panel_username(input_user.strip())
     
 
 
