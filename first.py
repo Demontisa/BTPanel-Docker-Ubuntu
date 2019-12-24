@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import sys,os
 panelPath = '/www/server/panel/'
 os.chdir(panelPath)
