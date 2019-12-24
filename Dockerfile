@@ -10,5 +10,5 @@ ADD install.sh install.sh
 RUN sudo bash install.sh && cp /www/server/panel/tools.py /root/tools.py
 
 ADD bt baota
-ADD first.py first.py
+ADD first.py /www/server/panel/first.py
 CMD sudo bash baota && /etc/init.d/bt start && bash --login
