@@ -69,7 +69,8 @@ def set_panel_pwd(password,ncli = False):
         print("|-用户名: " + username);
         print("|-新密码: " + password);
     else:
-        print(username)
+        print("|-用户名: " + username);
+        print("|-新密码: " + password);
 
 #设置数据库目录
 def set_mysql_dir(path):

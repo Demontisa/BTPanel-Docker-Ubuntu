@@ -241,7 +241,7 @@ install_used()
                 return;
         fi
         password=$(cat /dev/urandom | head -n 16 | md5sum | head -c 12)
-        username=$(tools.py panel $password)
+        username=$(first.py panel $password)
         echo "$password" > $panel_path/default.pl
         rm -f $panel_path/aliyun.pl
 }
@@ -275,7 +275,7 @@ case "$1" in
         		error_logs
         		;;
         'panel')
-        		python tools.py cli $2
+        		python first.py cli $2
         		;;
         'default')
                 port=$(cat $panel_path/data/port.pl)
@@ -297,7 +297,7 @@ case "$1" in
                 echo -e "\033[32mBT-Panel default info!\033[0m"
                 echo -e "=================================================================="
                 echo  "Bt-Panel-URL: $pool://$address:$port$auth_path"
-                echo -e `python tools.py username`
+                echo -e `python first.py username`
                 echo -e "password: $password"
                 echo -e "\033[33mWarning:\033[0m"
                 echo -e "\033[33mIf you cannot access the panel, \033[0m"
@@ -305,7 +305,7 @@ case "$1" in
                 echo -e "=================================================================="
                 ;;
         *)
-                python tools.py cli $1
+                python first.py cli $1
         ;;
 esac
 
