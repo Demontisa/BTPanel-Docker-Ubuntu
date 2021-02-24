@@ -1,4 +1,4 @@
-FROM ubuntu:18.04
+FROM ubuntu:20.04
 #指定运行目录
 WORKDIR /root/
 
